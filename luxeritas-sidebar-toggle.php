@@ -3,7 +3,7 @@
 Plugin Name: Luxeritas Sidebar Toggle
 Plugin URI: https://donguri3.net/
 Description: Luxeritasテーマ専用。右下に「サイドバー非表示」トグルボタンを追加し、メイン領域を100%に拡大します。設定画面よりボタン位置・配色・透明度・状態保持動作等をカスタマイズ可能です。
-Version: 1.1.0
+Version: 1.2.0
 Author: 納戸工房
 Author URI: https://donguri3.net/
 */
@@ -111,7 +111,7 @@ add_action( 'wp_enqueue_scripts', function() {
         'lux-sidebar-toggle-style',
         plugin_dir_url( __FILE__ ) . 'style.css',
         array(),
-        '1.1.0'
+        '1.2.0'
     );
     wp_add_inline_style( 'lux-sidebar-toggle-style', lux_sidebar_toggle_generate_inline_css( $options ) );
 
@@ -119,7 +119,7 @@ add_action( 'wp_enqueue_scripts', function() {
         'lux-sidebar-toggle-script',
         plugin_dir_url( __FILE__ ) . 'sidebar-toggle.js',
         array(),
-        '1.1.0',
+        '1.2.0',
         true
     );
 
@@ -136,30 +136,66 @@ add_action( 'wp_enqueue_scripts', function() {
     );
 });
 
+// 管理画面メニューの追加（Luxeritasのサブメニューとして登録）
 add_action( 'admin_menu', function() {
-    add_options_page(
-        'Luxeritas Sidebar Toggle 設定',
-        'Luxeritas Sidebar Toggle',
+    $theme = wp_get_theme();
+    if ( $theme->get_template() !== 'luxeritas' ) {
+        add_options_page(
+            'Luxeritas Sidebar Toggle 設定',
+            'Luxeritas Sidebar Toggle',
+            'manage_options',
+            'luxeritas-sidebar-toggle',
+            'lux_sidebar_toggle_render_admin_page'
+        );
+        return;
+    }
+
+    add_submenu_page(
+        'luxe',
+        'サイドバー非表示設定',
+        'サイドバー非表示',
         'manage_options',
         'luxeritas-sidebar-toggle',
         'lux_sidebar_toggle_render_admin_page'
     );
-});
+}, 99 );
 
+// Luxeritas 設定ページ（admin.php?page=luxe）のタブバーに「サイドバー非表示」タブをJSで挿入
+add_action( 'admin_footer', function() {
+    $screen = get_current_screen();
+    if ( ! $screen || $screen->id !== 'toplevel_page_luxe' ) {
+        return;
+    }
+    $target_url = esc_url( admin_url( 'admin.php?page=luxeritas-sidebar-toggle' ) );
+    ?>
+    <script>
+    jQuery(document).ready(function($) {
+        var $wrapper = $('.nav-tab-wrapper');
+        if ($wrapper.length && !$wrapper.find('a[href*="luxeritas-sidebar-toggle"]').length) {
+            $wrapper.append('<a href="<?php echo $target_url; ?>" class="nav-tab">サイドバー非表示</a>');
+        }
+    });
+    </script>
+    <?php
+} );
+
+// プラグイン一覧ページ（plugins.php）に「設定」アクションリンクを追加
 add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), function( $links ) {
-    $settings_link = '<a href="' . esc_url( admin_url( 'options-general.php?page=luxeritas-sidebar-toggle' ) ) . '">設定</a>';
+    $settings_link = '<a href="' . esc_url( admin_url( 'admin.php?page=luxeritas-sidebar-toggle' ) ) . '">設定</a>';
     array_unshift( $links, $settings_link );
     return $links;
 } );
 
+// 管理画面用アセットの読み込み (カラーピッカー等)
 add_action( 'admin_enqueue_scripts', function( $hook ) {
-    if ( $hook !== 'settings_page_luxeritas-sidebar-toggle' ) {
+    if ( strpos( $hook, 'luxeritas-sidebar-toggle' ) === false ) {
         return;
     }
     wp_enqueue_style( 'wp-color-picker' );
     wp_enqueue_script( 'wp-color-picker' );
 });
 
+// Settings API の登録
 add_action( 'admin_init', function() {
     register_setting(
         'lux_sidebar_toggle_settings_group',
@@ -325,10 +361,30 @@ function lux_sidebar_toggle_render_admin_page() {
     if ( ! current_user_can( 'manage_options' ) ) {
         return;
     }
+    $luxe_base = admin_url( 'admin.php?page=luxe' );
     ?>
     <div class="wrap">
-        <h1>Luxeritas Sidebar Toggle 設定</h1>
-        <p>Luxeritasテーマ用サイドバー切替トグルボタンの表示・配色・動作設定を行えます。</p>
+        <h1>Luxeritas 独自機能設定</h1>
+        <h2 class="nav-tab-wrapper">
+            <a href="<?php echo esc_url( $luxe_base . '&active=seo' ); ?>" class="nav-tab">SEO</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=ogp' ); ?>" class="nav-tab">OGP</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=title' ); ?>" class="nav-tab">タイトル</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=pagination' ); ?>" class="nav-tab">ページネーション</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=amp' ); ?>" class="nav-tab">AMP</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=pwa' ); ?>" class="nav-tab">PWA</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=optimize' ); ?>" class="nav-tab">圧縮・最適化</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=style' ); ?>" class="nav-tab">CSS</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=script' ); ?>" class="nav-tab">Javascript</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=lazyload' ); ?>" class="nav-tab">Lazy Load</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=icon' ); ?>" class="nav-tab">アイコンフォント</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=comment' ); ?>" class="nav-tab">コメント</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=search' ); ?>" class="nav-tab">検索</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=copyright' ); ?>" class="nav-tab">コピーライト</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=others' ); ?>" class="nav-tab">その他</a>
+            <a href="<?php echo esc_url( $luxe_base . '&active=version' ); ?>" class="nav-tab">バージョン</a>
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=luxeritas-sidebar-toggle' ) ); ?>" class="nav-tab nav-tab-active">サイドバー非表示</a>
+        </h2>
+        <p style="margin-top: 15px;">Luxeritasテーマ用サイドバー切替トグルボタンの表示・配色・動作設定を行えます。</p>
         <form action="options.php" method="post">
             <?php
             settings_fields( 'lux_sidebar_toggle_settings_group' );
