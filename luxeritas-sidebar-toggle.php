@@ -2,8 +2,8 @@
 /*
 Plugin Name: Luxeritas Sidebar Toggle
 Plugin URI: https://donguri3.net/
-Description: Luxeritasテーマ専用。右下に「サイドバー非表示」トグルボタンを追加し、メイン領域を100%に拡大します。設定画面よりボタン位置・配色・透明度・状態保持動作等をカスタマイズ可能です。
-Version: 1.2.1
+Description: Luxeritasテーマ専用。右下に「サイドバー非表示」トグルボタンを追加し、メイン領域を100%に拡大します。設定画面よりボタン位置・配色・透明度・スクロール同期連動・状態保持動作等をカスタマイズ可能です。
+Version: 1.3.0
 Author: 納戸工房
 Author URI: https://donguri3.net/
 */
@@ -30,6 +30,8 @@ function lux_sidebar_toggle_get_options() {
         'border_radius'     => 4,
         'keep_state'        => '1',
         'default_state'     => 'open',
+        'scroll_display'    => 'always',
+        'scroll_threshold'  => 100,
         'device_display'    => 'all',
         'mobile_breakpoint' => 768,
     );
@@ -67,7 +69,7 @@ function lux_sidebar_toggle_generate_inline_css( $options ) {
     color: {$text_color} !important;
     opacity: {$opacity} !important;
     border-radius: {$radius}px !important;
-    transition: background-color .3s, color .3s, opacity .8s !important;
+    transition: background-color .3s, color .3s, opacity .8s, visibility .8s !important;
 }
 .sidebar-toggle-btn:hover {
     background-color: {$hover_bg} !important;
@@ -78,7 +80,6 @@ function lux_sidebar_toggle_generate_inline_css( $options ) {
 .sidebar-toggle-btn:active:not(:hover) {
     opacity: {$opacity} !important;
 }
-
 ";
 
     if ( $device === 'pc_only' ) {
@@ -116,7 +117,7 @@ add_action( 'wp_enqueue_scripts', function() {
         'lux-sidebar-toggle-style',
         plugin_dir_url( __FILE__ ) . 'style.css',
         array(),
-        '1.2.1'
+        '1.3.0'
     );
     wp_add_inline_style( 'lux-sidebar-toggle-style', lux_sidebar_toggle_generate_inline_css( $options ) );
 
@@ -124,7 +125,7 @@ add_action( 'wp_enqueue_scripts', function() {
         'lux-sidebar-toggle-script',
         plugin_dir_url( __FILE__ ) . 'sidebar-toggle.js',
         array(),
-        '1.2.1',
+        '1.3.0',
         true
     );
 
@@ -137,6 +138,9 @@ add_action( 'wp_enqueue_scripts', function() {
             'targetSelector' => $options['target_selector'],
             'keepState'      => $options['keep_state'],
             'defaultState'   => $options['default_state'],
+            'scrollDisplay'  => $options['scroll_display'],
+            'scrollThreshold'=> intval( $options['scroll_threshold'] ),
+            'opacity'        => floatval( $options['opacity'] ) / 100,
         )
     );
 });
@@ -227,9 +231,11 @@ add_action( 'admin_init', function() {
     add_settings_field( 'hover_text_color', 'ホバー時 文字色', 'lux_field_hover_text_color_cb', 'luxeritas-sidebar-toggle', 'lux_sec_design' );
     add_settings_field( 'border_radius', '角丸 (border-radius px)', 'lux_field_border_radius_cb', 'luxeritas-sidebar-toggle', 'lux_sec_design' );
 
-    add_settings_section( 'lux_sec_behavior', '動作・ページ遷移設定', null, 'luxeritas-sidebar-toggle' );
+    add_settings_section( 'lux_sec_behavior', '動作・ページ遷移・スクロール設定', null, 'luxeritas-sidebar-toggle' );
     add_settings_field( 'keep_state', 'ページ遷移時の状態保持', 'lux_field_keep_state_cb', 'luxeritas-sidebar-toggle', 'lux_sec_behavior' );
     add_settings_field( 'default_state', '初期表示状態', 'lux_field_default_state_cb', 'luxeritas-sidebar-toggle', 'lux_sec_behavior' );
+    add_settings_field( 'scroll_display', 'スクロール連動表示設定', 'lux_field_scroll_display_cb', 'luxeritas-sidebar-toggle', 'lux_sec_behavior' );
+    add_settings_field( 'scroll_threshold', 'スクロール表示開始位置 (px)', 'lux_field_scroll_threshold_cb', 'luxeritas-sidebar-toggle', 'lux_sec_behavior' );
 
     add_settings_section( 'lux_sec_responsive', 'レスポンシブ・表示端末設定', null, 'luxeritas-sidebar-toggle' );
     add_settings_field( 'device_display', '表示対象デバイス', 'lux_field_device_display_cb', 'luxeritas-sidebar-toggle', 'lux_sec_responsive' );
@@ -258,6 +264,8 @@ function lux_sidebar_toggle_sanitize_options( $input ) {
     $output['border_radius']     = isset( $input['border_radius'] ) ? max( 0, intval( $input['border_radius'] ) ) : $defaults['border_radius'];
     $output['keep_state']        = ( isset( $input['keep_state'] ) && in_array( $input['keep_state'], array( '1', '0' ), true ) ) ? $input['keep_state'] : $defaults['keep_state'];
     $output['default_state']     = ( isset( $input['default_state'] ) && in_array( $input['default_state'], array( 'open', 'closed' ), true ) ) ? $input['default_state'] : $defaults['default_state'];
+    $output['scroll_display']    = ( isset( $input['scroll_display'] ) && in_array( $input['scroll_display'], array( 'always', 'scroll_only' ), true ) ) ? $input['scroll_display'] : $defaults['scroll_display'];
+    $output['scroll_threshold']  = isset( $input['scroll_threshold'] ) ? max( 0, intval( $input['scroll_threshold'] ) ) : $defaults['scroll_threshold'];
     $output['device_display']    = ( isset( $input['device_display'] ) && in_array( $input['device_display'], array( 'all', 'pc_only', 'mobile_only' ), true ) ) ? $input['device_display'] : $defaults['device_display'];
     $output['mobile_breakpoint'] = isset( $input['mobile_breakpoint'] ) ? max( 300, intval( $input['mobile_breakpoint'] ) ) : $defaults['mobile_breakpoint'];
 
@@ -346,6 +354,20 @@ function lux_field_default_state_cb() {
     echo '<label><input type="radio" name="lux_sidebar_toggle_settings[default_state]" value="open" ' . checked( $state, 'open', false ) . '> サイドバーを表示 (デフォルト)</label><br>';
     echo '<label><input type="radio" name="lux_sidebar_toggle_settings[default_state]" value="closed" ' . checked( $state, 'closed', false ) . '> サイドバーを最初から非表示にする</label>';
     echo '<p class="description">サイトにアクセスした際、または状態維持が無効な場合の初期表示状態を指定します。</p>';
+}
+
+function lux_field_scroll_display_cb() {
+    $options = lux_sidebar_toggle_get_options();
+    $scroll  = $options['scroll_display'];
+    echo '<label><input type="radio" name="lux_sidebar_toggle_settings[scroll_display]" value="always" ' . checked( $scroll, 'always', false ) . '> 常に表示する (デフォルト)</label><br>';
+    echo '<label><input type="radio" name="lux_sidebar_toggle_settings[scroll_display]" value="scroll_only" ' . checked( $scroll, 'scroll_only', false ) . '> スクロール時のみ表示 (#page-top ボタンと同様にスクロールで表示)</label>';
+    echo '<p class="description">ページ上部では隠し、下部へスクロールした際のみボタンを表示させるかどうかを設定します。</p>';
+}
+
+function lux_field_scroll_threshold_cb() {
+    $options = lux_sidebar_toggle_get_options();
+    echo '<input type="number" name="lux_sidebar_toggle_settings[scroll_threshold]" value="' . esc_attr( $options['scroll_threshold'] ) . '" min="0" class="small-text"> px';
+    echo '<p class="description">スクロール表示連動が有効な場合、何pxスクロールした時点で表示を開始するかを指定します。</p>';
 }
 
 function lux_field_device_display_cb() {

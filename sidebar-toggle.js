@@ -8,7 +8,10 @@ window.addEventListener('load', function() {
         textShowSidebar: 'サイドバー表示',
         targetSelector: '#wp-footer',
         keepState: '1',
-        defaultState: 'open'
+        defaultState: 'open',
+        scrollDisplay: 'always',
+        scrollThreshold: 100,
+        opacity: 0.5
     };
 
     const keepState = params.keepState === '1';
@@ -50,6 +53,25 @@ window.addEventListener('load', function() {
     }
     const footerEl = targetEl || document.getElementById('wp-footer') || document.body;
     footerEl.appendChild(toggleBtn);
+
+    // スクロール連動表示の処理 (#page-top ボタンと同様の挙動)
+    function updateScrollVisibility() {
+        if (params.scrollDisplay === 'scroll_only') {
+            const threshold = params.scrollThreshold || 100;
+            if (window.scrollY > threshold) {
+                toggleBtn.style.opacity = params.opacity;
+                toggleBtn.style.visibility = 'visible';
+            } else {
+                toggleBtn.style.opacity = '0';
+                toggleBtn.style.visibility = 'hidden';
+            }
+        }
+    }
+
+    if (params.scrollDisplay === 'scroll_only') {
+        window.addEventListener('scroll', updateScrollVisibility);
+        updateScrollVisibility();
+    }
 
     // クリックイベントの設定
     toggleBtn.addEventListener('click', function() {
