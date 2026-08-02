@@ -10,8 +10,8 @@ body.is-sidebar-closed #main {
     float: none !important;
 }
 
-/* #wp-footer 内に配置する右下固定トグルボタン */
-#wp-footer .sidebar-toggle-btn {
+/* 右下固定トグルボタンのベーススタイル */
+.sidebar-toggle-btn {
     position: fixed;
     bottom: 75px;
     right: 14px;
@@ -25,9 +25,9 @@ body.is-sidebar-closed #main {
     border-radius: 4px;
     cursor: pointer;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-    transition: background-color 0.2s;
+    transition: background-color 0.2s, color 0.2s, opacity 0.2s;
 }
 
-#wp-footer .sidebar-toggle-btn:hover {
+.sidebar-toggle-btn:hover {
     background-color: rgba(51, 51, 51, 0.95);
 }

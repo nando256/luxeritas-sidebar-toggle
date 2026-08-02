@@ -2,30 +2,64 @@ window.addEventListener('load', function() {
     // 二重生成防止
     if (document.querySelector('.sidebar-toggle-btn')) return;
 
+    // 設定パラメータの取得（フォールバック付き）
+    const params = window.luxSidebarToggleParams || {
+        textHideSidebar: 'サイドバー非表示',
+        textShowSidebar: 'サイドバー表示',
+        targetSelector: '#wp-footer',
+        keepState: '1',
+        defaultState: 'open'
+    };
+
+    const keepState = params.keepState === '1';
+    const defaultState = params.defaultState || 'open';
+    const storageKey = 'nhk_sidebar_closed';
+
+    // 初期開閉状態の判定
+    let isClosed = false;
+    if (keepState) {
+        const savedState = localStorage.getItem(storageKey);
+        if (savedState !== null) {
+            isClosed = savedState === 'true';
+        } else {
+            isClosed = defaultState === 'closed';
+        }
+    } else {
+        // 状態保持が無効な場合は保存データを消去し、デフォルト状態を適用
+        localStorage.removeItem(storageKey);
+        isClosed = defaultState === 'closed';
+    }
+
     // トグルボタンの動的生成
     const toggleBtn = document.createElement('button');
     toggleBtn.type = 'button';
     toggleBtn.className = 'sidebar-toggle-btn';
 
-    // 初期状態の復元 (localStorage)
-    const isClosed = localStorage.getItem('nhk_sidebar_closed') === 'true';
     if (isClosed) {
         document.body.classList.add('is-sidebar-closed');
-        toggleBtn.textContent = 'サイドバー表示';
+        toggleBtn.textContent = params.textShowSidebar;
     } else {
-        toggleBtn.textContent = 'サイドバー非表示';
+        document.body.classList.remove('is-sidebar-closed');
+        toggleBtn.textContent = params.textHideSidebar;
     }
 
-    // #wp-footer の配下に安全挿入
-    const footerEl = document.getElementById('wp-footer') || document.body;
+    // 挿入ターゲット要素の決定と安全挿入
+    let targetEl = null;
+    if (params.targetSelector) {
+        targetEl = document.querySelector(params.targetSelector);
+    }
+    const footerEl = targetEl || document.getElementById('wp-footer') || document.body;
     footerEl.appendChild(toggleBtn);
 
     // クリックイベントの設定
     toggleBtn.addEventListener('click', function() {
         document.body.classList.toggle('is-sidebar-closed');
         const closedNow = document.body.classList.contains('is-sidebar-closed');
-        toggleBtn.textContent = closedNow ? 'サイドバー表示' : 'サイドバー非表示';
-        localStorage.setItem('nhk_sidebar_closed', closedNow ? 'true' : 'false');
+        toggleBtn.textContent = closedNow ? params.textShowSidebar : params.textHideSidebar;
+
+        if (keepState) {
+            localStorage.setItem(storageKey, closedNow ? 'true' : 'false');
+        }
 
         // レイアウト補正用イベント発火（目次等の位置ズレ防止）
         window.dispatchEvent(new Event('resize'));
