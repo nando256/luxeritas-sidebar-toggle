@@ -3,7 +3,7 @@
 Plugin Name: Luxeritas Sidebar Toggle
 Plugin URI: https://donguri3.net/
 Description: Luxeritasテーマ専用。右下に「サイドバー非表示」トグルボタンを追加し、メイン領域を100%に拡大します。設定画面よりボタン位置・配色・透明度・状態保持動作等をカスタマイズ可能です。
-Version: 1.2.0
+Version: 1.2.1
 Author: 納戸工房
 Author URI: https://donguri3.net/
 */
@@ -21,10 +21,10 @@ function lux_sidebar_toggle_get_options() {
         'position_bottom'   => 75,
         'position_right'    => 14,
         'z_index'           => 99,
-        'bg_color'          => '#333333',
+        'bg_color'          => '#656463',
         'text_color'        => '#ffffff',
-        'opacity'           => 75,
-        'hover_bg_color'    => '#333333',
+        'opacity'           => 50,
+        'hover_bg_color'    => '#656463',
         'hover_text_color'  => '#ffffff',
         'hover_opacity'     => 95,
         'border_radius'     => 4,
@@ -41,10 +41,10 @@ function lux_sidebar_toggle_get_options() {
  * フロントエンド用動的CSSの生成
  */
 function lux_sidebar_toggle_generate_inline_css( $options ) {
-    $bg_color      = ! empty( $options['bg_color'] ) ? $options['bg_color'] : '#333333';
+    $bg_color      = ! empty( $options['bg_color'] ) ? $options['bg_color'] : '#656463';
     $text_color    = ! empty( $options['text_color'] ) ? $options['text_color'] : '#ffffff';
     $opacity       = floatval( $options['opacity'] ) / 100;
-    $hover_bg      = ! empty( $options['hover_bg_color'] ) ? $options['hover_bg_color'] : '#333333';
+    $hover_bg      = ! empty( $options['hover_bg_color'] ) ? $options['hover_bg_color'] : '#656463';
     $hover_text    = ! empty( $options['hover_text_color'] ) ? $options['hover_text_color'] : '#ffffff';
     $hover_opacity = floatval( $options['hover_opacity'] ) / 100;
     $bottom        = intval( $options['position_bottom'] );
@@ -54,25 +54,25 @@ function lux_sidebar_toggle_generate_inline_css( $options ) {
     $device        = $options['device_display'];
     $breakpoint    = intval( $options['mobile_breakpoint'] );
 
-    list( $r, $g, $b )   = sscanf( $bg_color, '#%02x%02x%02x' );
-    $bg_rgba             = sprintf( 'rgba(%d, %d, %d, %.2f)', $r, $g, $b, $opacity );
-
-    list( $hr, $hg, $hb ) = sscanf( $hover_bg, '#%02x%02x%02x' );
-    $hover_bg_rgba        = sprintf( 'rgba(%d, %d, %d, %.2f)', $hr, $hg, $hb, $hover_opacity );
-
     $css = "
 .sidebar-toggle-btn {
     position: fixed !important;
     bottom: {$bottom}px !important;
     right: {$right}px !important;
     z-index: {$z_index} !important;
-    background-color: {$bg_rgba} !important;
+    padding: 16px 20px !important;
+    font-weight: 700 !important;
+    text-align: center !important;
+    background-color: {$bg_color} !important;
     color: {$text_color} !important;
+    opacity: {$opacity} !important;
     border-radius: {$radius}px !important;
+    transition: background-color .3s, color .3s, opacity .8s !important;
 }
 .sidebar-toggle-btn:hover {
-    background-color: {$hover_bg_rgba} !important;
+    background-color: {$hover_bg} !important;
     color: {$hover_text} !important;
+    opacity: {$hover_opacity} !important;
 }
 ";
 
@@ -111,7 +111,7 @@ add_action( 'wp_enqueue_scripts', function() {
         'lux-sidebar-toggle-style',
         plugin_dir_url( __FILE__ ) . 'style.css',
         array(),
-        '1.2.0'
+        '1.2.1'
     );
     wp_add_inline_style( 'lux-sidebar-toggle-style', lux_sidebar_toggle_generate_inline_css( $options ) );
 
@@ -119,7 +119,7 @@ add_action( 'wp_enqueue_scripts', function() {
         'lux-sidebar-toggle-script',
         plugin_dir_url( __FILE__ ) . 'sidebar-toggle.js',
         array(),
-        '1.2.0',
+        '1.2.1',
         true
     );
 
@@ -297,7 +297,7 @@ function lux_field_z_index_cb() {
 
 function lux_field_bg_color_cb() {
     $options = lux_sidebar_toggle_get_options();
-    echo '<input type="text" name="lux_sidebar_toggle_settings[bg_color]" value="' . esc_attr( $options['bg_color'] ) . '" class="lux-color-picker" data-default-color="#333333"> ';
+    echo '<input type="text" name="lux_sidebar_toggle_settings[bg_color]" value="' . esc_attr( $options['bg_color'] ) . '" class="lux-color-picker" data-default-color="#656463"> ';
     echo ' 不透明度: <input type="number" name="lux_sidebar_toggle_settings[opacity]" value="' . esc_attr( $options['opacity'] ) . '" min="0" max="100" class="small-text"> %';
     echo '<p class="description">通常時の背景色と不透明度 (0% = 完全透明, 100% = 不透明)。</p>';
 }
@@ -310,7 +310,7 @@ function lux_field_text_color_cb() {
 
 function lux_field_hover_bg_color_cb() {
     $options = lux_sidebar_toggle_get_options();
-    echo '<input type="text" name="lux_sidebar_toggle_settings[hover_bg_color]" value="' . esc_attr( $options['hover_bg_color'] ) . '" class="lux-color-picker" data-default-color="#333333"> ';
+    echo '<input type="text" name="lux_sidebar_toggle_settings[hover_bg_color]" value="' . esc_attr( $options['hover_bg_color'] ) . '" class="lux-color-picker" data-default-color="#656463"> ';
     echo ' 不透明度: <input type="number" name="lux_sidebar_toggle_settings[hover_opacity]" value="' . esc_attr( $options['hover_opacity'] ) . '" min="0" max="100" class="small-text"> %';
     echo '<p class="description">マウスホバー時の背景色と不透明度。</p>';
 }
