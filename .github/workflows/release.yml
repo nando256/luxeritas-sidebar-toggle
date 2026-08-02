@@ -1,0 +1,33 @@
+name: Create Release Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    name: Create Release Package and Zip
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build WordPress Plugin Zip
+        run: |
+          mkdir -p build/luxeritas-sidebar-toggle
+          cp -r luxeritas-sidebar-toggle.php style.css sidebar-toggle.js README.md LICENSE build/luxeritas-sidebar-toggle/
+          cd build
+          zip -r ../luxeritas-sidebar-toggle.zip luxeritas-sidebar-toggle
+
+      - name: Create GitHub Release and Upload Asset
+        uses: softprops/action-gh-release@v2
+        with:
+          files: luxeritas-sidebar-toggle.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
