@@ -61,6 +61,9 @@ window.addEventListener('load', function() {
             localStorage.setItem(storageKey, closedNow ? 'true' : 'false');
         }
 
+        // クリック後のフォーカス残りを解除（半透明状態の復元）
+        toggleBtn.blur();
+
         // レイアウト補正用イベント発火（目次等の位置ズレ防止）
         window.dispatchEvent(new Event('resize'));
     });

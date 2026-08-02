@@ -74,6 +74,11 @@ function lux_sidebar_toggle_generate_inline_css( $options ) {
     color: {$hover_text} !important;
     opacity: {$hover_opacity} !important;
 }
+.sidebar-toggle-btn:focus:not(:hover),
+.sidebar-toggle-btn:active:not(:hover) {
+    opacity: {$opacity} !important;
+}
+
 ";
 
     if ( $device === 'pc_only' ) {
