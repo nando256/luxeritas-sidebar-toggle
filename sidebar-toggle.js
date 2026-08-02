@@ -10,9 +10,10 @@ window.addEventListener('load', function() {
         keepState: '1',
         defaultState: 'open',
         scrollDisplay: 'always',
-        scrollThreshold: 100,
+        scrollThreshold: 0,
         opacity: 0.5
     };
+
 
     const keepState = params.keepState === '1';
     const defaultState = params.defaultState || 'open';
@@ -57,7 +58,7 @@ window.addEventListener('load', function() {
     // スクロール連動表示の処理 (#page-top ボタンと同様の挙動)
     function updateScrollVisibility() {
         if (params.scrollDisplay === 'scroll_only') {
-            const threshold = params.scrollThreshold || 100;
+            const threshold = (params.scrollThreshold !== undefined && params.scrollThreshold !== null) ? parseInt(params.scrollThreshold, 10) : 0;
             if (window.scrollY > threshold) {
                 toggleBtn.style.opacity = params.opacity;
                 toggleBtn.style.visibility = 'visible';

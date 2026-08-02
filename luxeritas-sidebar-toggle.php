@@ -31,7 +31,7 @@ function lux_sidebar_toggle_get_options() {
         'keep_state'        => '1',
         'default_state'     => 'open',
         'scroll_display'    => 'always',
-        'scroll_threshold'  => 100,
+        'scroll_threshold'  => 0,
         'device_display'    => 'all',
         'mobile_breakpoint' => 768,
     );
@@ -71,14 +71,16 @@ function lux_sidebar_toggle_generate_inline_css( $options ) {
     border-radius: {$radius}px !important;
     transition: background-color .3s, color .3s, opacity .8s, visibility .8s !important;
 }
-.sidebar-toggle-btn:hover {
-    background-color: {$hover_bg} !important;
-    color: {$hover_text} !important;
-    opacity: {$hover_opacity} !important;
+@media (hover: hover) {
+    .sidebar-toggle-btn:hover {
+        background-color: {$hover_bg} !important;
+        color: {$hover_text} !important;
+        opacity: {$hover_opacity} !important;
+    }
 }
-.sidebar-toggle-btn:focus:not(:hover),
-.sidebar-toggle-btn:active:not(:hover) {
-    opacity: {$opacity} !important;
+.sidebar-toggle-btn:focus,
+.sidebar-toggle-btn:active {
+    outline: none !important;
 }
 ";
 
